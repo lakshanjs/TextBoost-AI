@@ -34,5 +34,35 @@
       ],
       "run_at": "document_idle"
     }
-  ]
+  ],
+  "commands": {
+    "ai-quick-rewrite": {
+      "suggested_key": {
+        "default": "Ctrl+Alt+Q",
+        "mac": "Command+Option+Q"
+      },
+      "description": "Quick rewrite (clarify & fix grammar)"
+    },
+    "ai-quick-rewrite-alt": {
+      "suggested_key": {
+        "default": "Alt+Q",
+        "mac": "Option+Q"
+      },
+      "description": "Quick rewrite (Alt+Q)"
+    },
+    "ai-summarize": {
+      "suggested_key": {
+        "default": "Ctrl+Alt+S",
+        "mac": "Command+Option+S"
+      },
+      "description": "Summarize"
+    },
+    "ai-expand": {
+      "suggested_key": {
+        "default": "Ctrl+Alt+E",
+        "mac": "Command+Option+E"
+      },
+      "description": "Write in detail"
+    }
+  }
 }

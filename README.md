@@ -1,7 +1,7 @@
 # TextBoost AI (Chrome Extension)
 
 Highlight text inside an input, textarea, or contenteditable element. Right-click → **TextBoost AI** → choose:
-- **Better write** (clarify & fix grammar)
+- **Quick rewrite** (clarify & fix grammar)
 - **Summarize**
 - **Write in detail**
 

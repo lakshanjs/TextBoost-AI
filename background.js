@@ -40,9 +40,9 @@ chrome.runtime.onInstalled.addListener(() => {
         contexts: ["editable"]
     });
     chrome.contextMenus.create({
-        id: "ai-better-write",
+        id: "ai-quick-rewrite",
         parentId: "ai-root",
-        title: "Better write (clarify & fix grammar)",
+        title: "Quick rewrite (clarify & fix grammar)",
         contexts: ["editable"]
     });
     chrome.contextMenus.create({
@@ -58,25 +58,21 @@ chrome.runtime.onInstalled.addListener(() => {
         contexts: ["editable"]
     });
 });
+async function handleAction(action, tabId) {
+    if (!tabId || !["ai-quick-rewrite", "ai-summarize", "ai-expand"].includes(action)) return;
 
-chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-    if (!tab || !tab.id) return;
-    const action = info.menuItemId;
-    if (!["ai-better-write", "ai-summarize", "ai-expand"].includes(action)) return;
-
-    // UPDATED: Get both text and element info in one call
     const [{ result, error }] = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
+        target: { tabId },
         func: getSelectedEditableTextAndElement
     });
 
     if (error) {
-        notify(tab.id, "TextBoost AI: failed to read selection: " + error);
+        notify(tabId, "TextBoost AI: failed to read selection: " + error);
         return;
     }
-    
+
     if (!result || !result.text.trim()) {
-        notify(tab.id, "TextBoost AI: select some text inside an editable field first.");
+        notify(tabId, "TextBoost AI: select some text inside an editable field first.");
         return;
     }
 
@@ -85,31 +81,42 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
     try {
         const prompt = buildPrompt(action, selected);
-        pageLog(tab.id, prompt);
+        pageLog(tabId, prompt);
         const rewritten = await callModel(prompt);
-        pageLog(tab.id, rewritten);
+        pageLog(tabId, rewritten);
         if (!rewritten) {
-            notify(tab.id, "TextBoost AI: AI returned no content.");
+            notify(tabId, "TextBoost AI: AI returned no content.");
             return;
         }
 
-        // UPDATED: Pass both replacement text and element info
         await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
+            target: { tabId },
             func: replaceTextInElement,
             args: [rewritten, elementInfo]
         });
 
-        notify(tab.id, "TextBoost AI: replaced selection.");
+        notify(tabId, "TextBoost AI: replaced selection.");
     } catch (e) {
-        notify(tab.id, "TextBoost AI error: " + (e?.message || e));
+        notify(tabId, "TextBoost AI error: " + (e?.message || e));
     }
+}
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+    if (!tab || !tab.id) return;
+    handleAction(info.menuItemId, tab.id);
+});
+
+chrome.commands.onCommand.addListener(async (command) => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || !tab.id) return;
+    const action = command === "ai-quick-rewrite-alt" ? "ai-quick-rewrite" : command;
+    handleAction(action, tab.id);
 });
 
 function buildPrompt(action, text) {
     const base = `You are a rewriting assistant. Output plain text only (no markdown fences or quotes). Do not explain, do not comment, do not roleplay. Only return the rewritten version of the given text. Preserve meaning.`;
 
-    if (action === "ai-better-write") {
+    if (action === "ai-quick-rewrite") {
         return `${base}\n\nTask: Rewrite the text to be clearer, fixing grammar and punctuation while keeping the same tone and meaning. Return only the rewritten text.\n\n----\n${text}\n----`;
     }
 
