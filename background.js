@@ -7,6 +7,10 @@ const DEFAULT_SETTINGS = {
     geminiModel: 'gemini-2.5-flash-lite',
     openrouterApiKey: '',
     openrouterModel: 'openrouter/auto',
+    openaiApiKey: '',
+    openaiModel: 'gpt-4o-mini',
+    deepseekApiKey: '',
+    deepseekModel: 'deepseek-chat',
     temperature: 0.7
 };
 
@@ -170,12 +174,66 @@ async function callOpenRouter(userText, apiKey, model, temperature) {
     return (data?.choices?.[0]?.message?.content || '').trim();
 }
 
+async function callOpenAI(userText, apiKey, model, temperature) {
+    const url = 'https://api.openai.com/v1/chat/completions';
+    const body = {
+        model,
+        messages: [{ role: 'user', content: userText }],
+        temperature
+    };
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+        const t = await res.text().catch(() => "");
+        throw new Error(`HTTP ${res.status}: ${t}`);
+    }
+    const data = await res.json();
+    return (data?.choices?.[0]?.message?.content || '').trim();
+}
+
+async function callDeepSeek(userText, apiKey, model, temperature) {
+    const url = 'https://api.deepseek.com/v1/chat/completions';
+    const body = {
+        model,
+        messages: [{ role: 'user', content: userText }],
+        temperature
+    };
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+        const t = await res.text().catch(() => "");
+        throw new Error(`HTTP ${res.status}: ${t}`);
+    }
+    const data = await res.json();
+    return (data?.choices?.[0]?.message?.content || '').trim();
+}
+
 async function callModel(userText) {
     const settings = await getSettings();
     const temperature = settings.temperature ?? 0.7;
     if (settings.provider === 'openrouter') {
         if (!settings.openrouterApiKey) throw new Error('OpenRouter API key is missing');
         return callOpenRouter(userText, settings.openrouterApiKey, settings.openrouterModel, temperature);
+    }
+    if (settings.provider === 'openai') {
+        if (!settings.openaiApiKey) throw new Error('OpenAI API key is missing');
+        return callOpenAI(userText, settings.openaiApiKey, settings.openaiModel, temperature);
+    }
+    if (settings.provider === 'deepseek') {
+        if (!settings.deepseekApiKey) throw new Error('DeepSeek API key is missing');
+        return callDeepSeek(userText, settings.deepseekApiKey, settings.deepseekModel, temperature);
     }
     if (!settings.geminiApiKey) throw new Error('Gemini API key is missing');
     return callGemini(userText, settings.geminiApiKey, settings.geminiModel, temperature);

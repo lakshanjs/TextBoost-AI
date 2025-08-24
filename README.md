@@ -5,7 +5,7 @@ Highlight text inside an input, textarea, or contenteditable element. Right-clic
 - **Summarize**
 - **Write in detail**
 
-The selection is replaced with AI output using either Google's Generative Language API or OpenRouter.
+The selection is replaced with AI output using Gemini, OpenRouter, OpenAI, or DeepSeek.
 
 ## Install (Developer Mode)
 
@@ -16,6 +16,6 @@ The selection is replaced with AI output using either Google's Generative Langua
 
 ## Configuration
 
-Open the extension's options page to choose between Gemini and OpenRouter, provide your API key, select a model, and adjust temperature.
+Open the extension's options page to choose between Gemini, OpenRouter, OpenAI, or DeepSeek, provide your API key, select a model, and adjust temperature.
 
 > ⚠️ **Security note**: API keys are stored in Chrome's extension storage; treat this extension as a personal tool.
