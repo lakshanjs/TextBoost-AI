@@ -40,9 +40,9 @@ chrome.runtime.onInstalled.addListener(() => {
         contexts: ["editable"]
     });
     chrome.contextMenus.create({
-        id: "ai-better-write",
+        id: "ai-quick-rewrite",
         parentId: "ai-root",
-        title: "Better write (clarify & fix grammar)",
+        title: "Quick rewrite (clarify & fix grammar)",
         contexts: ["editable"]
     });
     chrome.contextMenus.create({
@@ -59,7 +59,7 @@ chrome.runtime.onInstalled.addListener(() => {
     });
 });
 async function handleAction(action, tabId) {
-    if (!tabId || !["ai-better-write", "ai-summarize", "ai-expand"].includes(action)) return;
+    if (!tabId || !["ai-quick-rewrite", "ai-summarize", "ai-expand"].includes(action)) return;
 
     const [{ result, error }] = await chrome.scripting.executeScript({
         target: { tabId },
@@ -109,14 +109,14 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 chrome.commands.onCommand.addListener(async (command) => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab || !tab.id) return;
-    const action = command === "ai-better-write-alt" ? "ai-better-write" : command;
+    const action = command === "ai-quick-rewrite-alt" ? "ai-quick-rewrite" : command;
     handleAction(action, tab.id);
 });
 
 function buildPrompt(action, text) {
     const base = `You are a rewriting assistant. Output plain text only (no markdown fences or quotes). Do not explain, do not comment, do not roleplay. Only return the rewritten version of the given text. Preserve meaning.`;
 
-    if (action === "ai-better-write") {
+    if (action === "ai-quick-rewrite") {
         return `${base}\n\nTask: Rewrite the text to be clearer, fixing grammar and punctuation while keeping the same tone and meaning. Return only the rewritten text.\n\n----\n${text}\n----`;
     }
 

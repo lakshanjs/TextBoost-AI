@@ -36,19 +36,19 @@
     }
   ],
   "commands": {
-    "ai-better-write": {
+    "ai-quick-rewrite": {
       "suggested_key": {
-        "default": "Ctrl+Alt+B",
-        "mac": "Command+Option+B"
+        "default": "Ctrl+Alt+Q",
+        "mac": "Command+Option+Q"
       },
-      "description": "Better write (clarify & fix grammar)"
+      "description": "Quick rewrite (clarify & fix grammar)"
     },
-    "ai-better-write-alt": {
+    "ai-quick-rewrite-alt": {
       "suggested_key": {
-        "default": "Alt+B",
-        "mac": "Option+B"
+        "default": "Alt+Q",
+        "mac": "Option+Q"
       },
-      "description": "Better write (Alt+B)"
+      "description": "Quick rewrite (Alt+Q)"
     },
     "ai-summarize": {
       "suggested_key": {
