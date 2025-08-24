@@ -1,45 +1,203 @@
-document.addEventListener('DOMContentLoaded', restore);
-document.getElementById('save').addEventListener('click', save);
-document.getElementById('provider').addEventListener('change', updateVisibility);
+/* global chrome */
 
-function updateVisibility() {
-  const provider = document.getElementById('provider').value;
-  document.querySelectorAll('.provider-settings').forEach(el => el.style.display = 'none');
-  const active = document.getElementById(provider + '-settings');
-  if (active) active.style.display = 'block';
-}
+// ---------- Element refs ----------
+const els = {
+    provider: document.getElementById('provider'),
+    temperature: document.getElementById('temperature'),
 
-function save() {
-  const data = {
-    provider: document.getElementById('provider').value,
-    geminiApiKey: document.getElementById('geminiApiKey').value,
-    geminiModel: document.getElementById('geminiModel').value || 'gemini-2.5-flash-lite',
-    openrouterApiKey: document.getElementById('openrouterApiKey').value,
-    openrouterModel: document.getElementById('openrouterModel').value || 'openrouter/auto',
-    temperature: parseFloat(document.getElementById('temperature').value) || 0.7
-  };
-  chrome.storage.sync.set(data, () => {
-    const status = document.getElementById('status');
-    status.textContent = 'Saved!';
-    setTimeout(() => status.textContent = '', 2000);
-  });
-}
+    geminiWrap: document.getElementById('gemini-settings'),
+    geminiApiKey: document.getElementById('geminiApiKey'),
+    geminiModel: document.getElementById('geminiModel'),
+    toggleGeminiKey: document.getElementById('toggleGeminiKey'),
+    testGemini: document.getElementById('testGemini'),
 
-function restore() {
-  chrome.storage.sync.get({
+    openrouterWrap: document.getElementById('openrouter-settings'),
+    openrouterApiKey: document.getElementById('openrouterApiKey'),
+    openrouterModel: document.getElementById('openrouterModel'),
+    toggleOpenRouterKey: document.getElementById('toggleOpenRouterKey'),
+    testOpenRouter: document.getElementById('testOpenRouter'),
+
+    save: document.getElementById('save'),
+    reset: document.getElementById('reset'),
+    setDeterministic: document.getElementById('setDeterministic'),
+    setCreative: document.getElementById('setCreative'),
+    status: document.getElementById('status')
+};
+
+// ---------- Defaults ----------
+const DEFAULTS = {
     provider: 'gemini',
     geminiApiKey: '',
     geminiModel: 'gemini-2.5-flash-lite',
     openrouterApiKey: '',
     openrouterModel: 'openrouter/auto',
     temperature: 0.7
-  }, items => {
-    document.getElementById('provider').value = items.provider;
-    document.getElementById('geminiApiKey').value = items.geminiApiKey;
-    document.getElementById('geminiModel').value = items.geminiModel;
-    document.getElementById('openrouterApiKey').value = items.openrouterApiKey;
-    document.getElementById('openrouterModel').value = items.openrouterModel;
-    document.getElementById('temperature').value = items.temperature;
-    updateVisibility();
-  });
+};
+
+// ---------- Utils ----------
+function showToast(msg, type = 'ok', ms = 1800) {
+    if (!els.status) return;
+    els.status.textContent = msg;
+    els.status.className = `status show ${type}`.trim();
+    window.setTimeout(() => {
+        els.status.className = `status ${type}`.trim();
+        els.status.textContent = '';
+    }, ms);
 }
+
+function setVisible(container, visible) {
+    if (!container) return;
+    // Prefer class toggle if .hidden is in your CSS; fallback to style.display
+    if (container.classList) {
+        container.classList.toggle('hidden', !visible);
+    }
+    container.style.display = visible ? 'block' : 'none';
+}
+
+function sanitizeTemp(val) {
+    let t = Number(val);
+    if (Number.isNaN(t)) t = DEFAULTS.temperature;
+    // Clamp to 0..2 (OpenAI-style range; suits most providers)
+    return Math.max(0, Math.min(2, t));
+}
+
+function toggleSecret(inputEl, btnEl) {
+    if (!inputEl || !btnEl) return;
+    const isPassword = inputEl.type === 'password';
+    inputEl.type = isPassword ? 'text' : 'password';
+    btnEl.setAttribute('aria-pressed', String(isPassword));
+    btnEl.textContent = isPassword ? 'Hide' : 'Show';
+}
+
+// ---------- Visibility ----------
+function updateVisibility() {
+    const provider = els.provider ? els.provider.value : DEFAULTS.provider;
+    // If your page still has .provider-settings groups, hide them all first
+    document.querySelectorAll('.provider-settings').forEach(el => {
+        setVisible(el, false);
+    });
+
+    // Then show the active group by id
+    const active = document.getElementById(provider + '-settings');
+    setVisible(active, true);
+
+    // Also explicitly handle known wrappers (newer UI)
+    setVisible(els.geminiWrap, provider === 'gemini');
+    setVisible(els.openrouterWrap, provider === 'openrouter');
+}
+
+// ---------- Persistence ----------
+async function restore() {
+    try {
+        const keys = Object.keys(DEFAULTS);
+        const items = await chrome.storage.sync.get(keys);
+
+        const state = { ...DEFAULTS, ...items };
+
+        if (els.provider) els.provider.value = state.provider;
+        if (els.geminiApiKey) els.geminiApiKey.value = state.geminiApiKey || '';
+        if (els.geminiModel) els.geminiModel.value = state.geminiModel || DEFAULTS.geminiModel;
+        if (els.openrouterApiKey) els.openrouterApiKey.value = state.openrouterApiKey || '';
+        if (els.openrouterModel) els.openrouterModel.value = state.openrouterModel || DEFAULTS.openrouterModel;
+        if (els.temperature) els.temperature.value = String(state.temperature);
+
+        updateVisibility();
+    } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+        showToast('Failed to load settings', 'err', 2400);
+    }
+}
+
+async function save() {
+    const data = {
+        provider: els.provider ? els.provider.value : DEFAULTS.provider,
+        geminiApiKey: els.geminiApiKey ? els.geminiApiKey.value : '',
+        geminiModel: (els.geminiModel && els.geminiModel.value) ? els.geminiModel.value : DEFAULTS.geminiModel,
+        openrouterApiKey: els.openrouterApiKey ? els.openrouterApiKey.value : '',
+        openrouterModel: (els.openrouterModel && els.openrouterModel.value) ? els.openrouterModel.value : DEFAULTS.openrouterModel,
+        temperature: sanitizeTemp(els.temperature ? els.temperature.value : DEFAULTS.temperature)
+    };
+
+    try {
+        await chrome.storage.sync.set(data);
+        showToast('Settings saved', 'ok');
+    } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+        showToast('Save failed', 'err', 2600);
+    }
+}
+
+async function resetToDefaults() {
+    try {
+        // Keep existing keys by default; comment the next line to hard-reset everything.
+        const keepKeys = await chrome.storage.sync.get(['geminiApiKey', 'openrouterApiKey']);
+        const data = { ...DEFAULTS, ...keepKeys };
+        await chrome.storage.sync.set(data);
+        await restore();
+        showToast('Reset to defaults', 'warn');
+    } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+        showToast('Reset failed', 'err', 2600);
+    }
+}
+
+// ---------- Optional "Test" stubs ----------
+function testGemini() {
+    const key = (els.geminiApiKey && els.geminiApiKey.value || '').trim();
+    if (!key) return showToast('Enter a Gemini API key first', 'err');
+    // Wire to your background script if you want an actual ping.
+    showToast('Gemini key looks set', 'ok');
+}
+
+function testOpenRouter() {
+    const key = (els.openrouterApiKey && els.openrouterApiKey.value || '').trim();
+    if (!key) return showToast('Enter an OpenRouter API key first', 'err');
+    showToast('OpenRouter key looks set', 'ok');
+}
+
+// ---------- Wire events ----------
+document.addEventListener('DOMContentLoaded', () => {
+    restore();
+
+    if (els.save) els.save.addEventListener('click', save);
+    if (els.provider) els.provider.addEventListener('change', updateVisibility);
+
+    // Temperature validation
+    if (els.temperature) {
+        els.temperature.addEventListener('blur', () => {
+            els.temperature.value = String(sanitizeTemp(els.temperature.value));
+        });
+    }
+
+    // Show/Hide secret buttons (if present in your HTML)
+    if (els.toggleGeminiKey && els.geminiApiKey) {
+        els.toggleGeminiKey.addEventListener('click', () => toggleSecret(els.geminiApiKey, els.toggleGeminiKey));
+    }
+    if (els.toggleOpenRouterKey && els.openrouterApiKey) {
+        els.toggleOpenRouterKey.addEventListener('click', () => toggleSecret(els.openrouterApiKey, els.toggleOpenRouterKey));
+    }
+
+    // Preset buttons (optional)
+    if (els.setDeterministic && els.temperature) {
+        els.setDeterministic.addEventListener('click', () => {
+            els.temperature.value = '0';
+            showToast('Temperature set to 0 (deterministic)', 'warn');
+        });
+    }
+    if (els.setCreative && els.temperature) {
+        els.setCreative.addEventListener('click', () => {
+            els.temperature.value = '0.7';
+            showToast('Temperature set to 0.7 (creative)', 'warn');
+        });
+    }
+
+    // Test buttons (optional)
+    if (els.testGemini) els.testGemini.addEventListener('click', testGemini);
+    if (els.testOpenRouter) els.testOpenRouter.addEventListener('click', testOpenRouter);
+
+    // Reset (optional)
+    if (els.reset) els.reset.addEventListener('click', resetToDefaults);
+});
