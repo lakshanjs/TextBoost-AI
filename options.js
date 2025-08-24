@@ -33,7 +33,8 @@ const els = {
     reset: document.getElementById('reset'),
     setDeterministic: document.getElementById('setDeterministic'),
     setCreative: document.getElementById('setCreative'),
-    status: document.getElementById('status')
+    status: document.getElementById('status'),
+    shortcutList: document.getElementById('shortcut-list')
 };
 
 // ---------- Defaults ----------
@@ -83,6 +84,32 @@ function toggleSecret(inputEl, btnEl) {
     inputEl.type = isPassword ? 'text' : 'password';
     btnEl.setAttribute('aria-pressed', String(isPassword));
     btnEl.textContent = isPassword ? 'Hide' : 'Show';
+}
+
+async function loadShortcuts() {
+    if (!els.shortcutList) return;
+    try {
+        const commands = await chrome.commands.getAll();
+        if (!commands.length) {
+            els.shortcutList.textContent = 'No shortcuts assigned.';
+            els.shortcutList.className = 'hint';
+            return;
+        }
+        els.shortcutList.innerHTML = '';
+        for (const cmd of commands) {
+            const div = document.createElement('div');
+            div.className = 'hint';
+            const key = cmd.shortcut ? `<span class="kbd">${cmd.shortcut}</span>` : '<em>not set</em>';
+            const desc = cmd.description || cmd.name;
+            div.innerHTML = `${key} – ${desc}`;
+            els.shortcutList.appendChild(div);
+        }
+    } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+        els.shortcutList.textContent = 'Unable to load shortcuts.';
+        els.shortcutList.className = 'hint';
+    }
 }
 
 // ---------- Visibility ----------
@@ -248,6 +275,7 @@ async function testDeepSeek() {
 // ---------- Wire events ----------
 document.addEventListener('DOMContentLoaded', () => {
     restore();
+    loadShortcuts();
 
     if (els.save) els.save.addEventListener('click', save);
     if (els.provider) els.provider.addEventListener('change', updateVisibility);
