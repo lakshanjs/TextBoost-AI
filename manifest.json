@@ -45,10 +45,10 @@
     },
     "ai-quick-rewrite-alt": {
       "suggested_key": {
-        "default": "Alt+Q",
-        "mac": "Option+Q"
+        "default": "Alt+Shift+Q",
+        "mac": "Option+Shift+Q"
       },
-      "description": "Quick rewrite (Alt+Q)"
+      "description": "Quick rewrite (Alt+Shift+Q)"
     },
     "ai-summarize": {
       "suggested_key": {
