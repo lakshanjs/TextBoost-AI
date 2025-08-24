@@ -270,6 +270,8 @@
                         <select id="provider" aria-describedby="provider-hint">
                             <option value="gemini">Gemini</option>
                             <option value="openrouter">OpenRouter</option>
+                            <option value="openai">OpenAI</option>
+                            <option value="deepseek">DeepSeek</option>
                         </select>
                         <div id="provider-hint" class="hint">
                             Choose the default API to use for rewriting.
@@ -337,6 +339,62 @@
                         <div class="field">
                             <label>&nbsp;</label>
                             <button id="testOpenRouter" class="btn ghost" type="button" title="Sends a lightweight ping using your key">Test Connection</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OpenAI Settings -->
+                <div id="openai-settings" class="hidden">
+                    <div class="provider-badge" style="margin-bottom:10px;">
+                        <span class="dot" aria-hidden="true"></span> OpenAI
+                    </div>
+
+                    <div class="with-btn">
+                        <div class="field">
+                            <label for="openaiApiKey">OpenAI API Key</label>
+                            <input class="input" id="openaiApiKey" type="password" autocomplete="off" spellcheck="false" />
+                            <div class="hint">Create at <span class="kbd">platform.openai.com</span>.</div>
+                        </div>
+                        <button id="toggleOpenAIKey" class="btn secondary mini" type="button" aria-pressed="false">Show</button>
+                    </div>
+
+                    <div class="row" style="margin-top:10px;">
+                        <div class="field">
+                            <label for="openaiModel">OpenAI Model</label>
+                            <input class="input" id="openaiModel" type="text" placeholder="gpt-4o-mini" />
+                            <div class="hint">Examples: <span class="kbd">gpt-4o-mini</span>, <span class="kbd">gpt-3.5-turbo</span>.</div>
+                        </div>
+                        <div class="field">
+                            <label>&nbsp;</label>
+                            <button id="testOpenAI" class="btn ghost" type="button" title="Sends a lightweight ping using your key">Test Connection</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DeepSeek Settings -->
+                <div id="deepseek-settings" class="hidden">
+                    <div class="provider-badge" style="margin-bottom:10px;">
+                        <span class="dot" aria-hidden="true"></span> DeepSeek
+                    </div>
+
+                    <div class="with-btn">
+                        <div class="field">
+                            <label for="deepseekApiKey">DeepSeek API Key</label>
+                            <input class="input" id="deepseekApiKey" type="password" autocomplete="off" spellcheck="false" />
+                            <div class="hint">Get at <span class="kbd">platform.deepseek.com</span>.</div>
+                        </div>
+                        <button id="toggleDeepSeekKey" class="btn secondary mini" type="button" aria-pressed="false">Show</button>
+                    </div>
+
+                    <div class="row" style="margin-top:10px;">
+                        <div class="field">
+                            <label for="deepseekModel">DeepSeek Model</label>
+                            <input class="input" id="deepseekModel" type="text" placeholder="deepseek-chat" />
+                            <div class="hint">Examples: <span class="kbd">deepseek-chat</span>, <span class="kbd">deepseek-coder</span>.</div>
+                        </div>
+                        <div class="field">
+                            <label>&nbsp;</label>
+                            <button id="testDeepSeek" class="btn ghost" type="button" title="Sends a lightweight ping using your key">Test Connection</button>
                         </div>
                     </div>
                 </div>

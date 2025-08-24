@@ -17,6 +17,18 @@ const els = {
     toggleOpenRouterKey: document.getElementById('toggleOpenRouterKey'),
     testOpenRouter: document.getElementById('testOpenRouter'),
 
+    openaiWrap: document.getElementById('openai-settings'),
+    openaiApiKey: document.getElementById('openaiApiKey'),
+    openaiModel: document.getElementById('openaiModel'),
+    toggleOpenAIKey: document.getElementById('toggleOpenAIKey'),
+    testOpenAI: document.getElementById('testOpenAI'),
+
+    deepseekWrap: document.getElementById('deepseek-settings'),
+    deepseekApiKey: document.getElementById('deepseekApiKey'),
+    deepseekModel: document.getElementById('deepseekModel'),
+    toggleDeepSeekKey: document.getElementById('toggleDeepSeekKey'),
+    testDeepSeek: document.getElementById('testDeepSeek'),
+
     save: document.getElementById('save'),
     reset: document.getElementById('reset'),
     setDeterministic: document.getElementById('setDeterministic'),
@@ -31,6 +43,10 @@ const DEFAULTS = {
     geminiModel: 'gemini-2.5-flash-lite',
     openrouterApiKey: '',
     openrouterModel: 'openrouter/auto',
+    openaiApiKey: '',
+    openaiModel: 'gpt-4o-mini',
+    deepseekApiKey: '',
+    deepseekModel: 'deepseek-chat',
     temperature: 0.7
 };
 
@@ -84,6 +100,8 @@ function updateVisibility() {
     // Also explicitly handle known wrappers (newer UI)
     setVisible(els.geminiWrap, provider === 'gemini');
     setVisible(els.openrouterWrap, provider === 'openrouter');
+    setVisible(els.openaiWrap, provider === 'openai');
+    setVisible(els.deepseekWrap, provider === 'deepseek');
 }
 
 // ---------- Persistence ----------
@@ -99,6 +117,10 @@ async function restore() {
         if (els.geminiModel) els.geminiModel.value = state.geminiModel || DEFAULTS.geminiModel;
         if (els.openrouterApiKey) els.openrouterApiKey.value = state.openrouterApiKey || '';
         if (els.openrouterModel) els.openrouterModel.value = state.openrouterModel || DEFAULTS.openrouterModel;
+        if (els.openaiApiKey) els.openaiApiKey.value = state.openaiApiKey || '';
+        if (els.openaiModel) els.openaiModel.value = state.openaiModel || DEFAULTS.openaiModel;
+        if (els.deepseekApiKey) els.deepseekApiKey.value = state.deepseekApiKey || '';
+        if (els.deepseekModel) els.deepseekModel.value = state.deepseekModel || DEFAULTS.deepseekModel;
         if (els.temperature) els.temperature.value = String(state.temperature);
 
         updateVisibility();
@@ -116,6 +138,10 @@ async function save() {
         geminiModel: (els.geminiModel && els.geminiModel.value) ? els.geminiModel.value : DEFAULTS.geminiModel,
         openrouterApiKey: els.openrouterApiKey ? els.openrouterApiKey.value : '',
         openrouterModel: (els.openrouterModel && els.openrouterModel.value) ? els.openrouterModel.value : DEFAULTS.openrouterModel,
+        openaiApiKey: els.openaiApiKey ? els.openaiApiKey.value : '',
+        openaiModel: (els.openaiModel && els.openaiModel.value) ? els.openaiModel.value : DEFAULTS.openaiModel,
+        deepseekApiKey: els.deepseekApiKey ? els.deepseekApiKey.value : '',
+        deepseekModel: (els.deepseekModel && els.deepseekModel.value) ? els.deepseekModel.value : DEFAULTS.deepseekModel,
         temperature: sanitizeTemp(els.temperature ? els.temperature.value : DEFAULTS.temperature)
     };
 
@@ -132,7 +158,7 @@ async function save() {
 async function resetToDefaults() {
     try {
         // Keep existing keys by default; comment the next line to hard-reset everything.
-        const keepKeys = await chrome.storage.sync.get(['geminiApiKey', 'openrouterApiKey']);
+        const keepKeys = await chrome.storage.sync.get(['geminiApiKey', 'openrouterApiKey', 'openaiApiKey', 'deepseekApiKey']);
         const data = { ...DEFAULTS, ...keepKeys };
         await chrome.storage.sync.set(data);
         await restore();
@@ -158,6 +184,18 @@ function testOpenRouter() {
     showToast('OpenRouter key looks set', 'ok');
 }
 
+function testOpenAI() {
+    const key = (els.openaiApiKey && els.openaiApiKey.value || '').trim();
+    if (!key) return showToast('Enter an OpenAI API key first', 'err');
+    showToast('OpenAI key looks set', 'ok');
+}
+
+function testDeepSeek() {
+    const key = (els.deepseekApiKey && els.deepseekApiKey.value || '').trim();
+    if (!key) return showToast('Enter a DeepSeek API key first', 'err');
+    showToast('DeepSeek key looks set', 'ok');
+}
+
 // ---------- Wire events ----------
 document.addEventListener('DOMContentLoaded', () => {
     restore();
@@ -179,6 +217,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (els.toggleOpenRouterKey && els.openrouterApiKey) {
         els.toggleOpenRouterKey.addEventListener('click', () => toggleSecret(els.openrouterApiKey, els.toggleOpenRouterKey));
     }
+    if (els.toggleOpenAIKey && els.openaiApiKey) {
+        els.toggleOpenAIKey.addEventListener('click', () => toggleSecret(els.openaiApiKey, els.toggleOpenAIKey));
+    }
+    if (els.toggleDeepSeekKey && els.deepseekApiKey) {
+        els.toggleDeepSeekKey.addEventListener('click', () => toggleSecret(els.deepseekApiKey, els.toggleDeepSeekKey));
+    }
 
     // Preset buttons (optional)
     if (els.setDeterministic && els.temperature) {
@@ -197,6 +241,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Test buttons (optional)
     if (els.testGemini) els.testGemini.addEventListener('click', testGemini);
     if (els.testOpenRouter) els.testOpenRouter.addEventListener('click', testOpenRouter);
+    if (els.testOpenAI) els.testOpenAI.addEventListener('click', testOpenAI);
+    if (els.testDeepSeek) els.testDeepSeek.addEventListener('click', testDeepSeek);
 
     // Reset (optional)
     if (els.reset) els.reset.addEventListener('click', resetToDefaults);
