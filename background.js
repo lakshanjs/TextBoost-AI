@@ -42,7 +42,7 @@ chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create({
         id: "ai-quick-rewrite",
         parentId: "ai-root",
-        title: "Quick rewrite (clarify & fix grammar)",
+        title: "Quick rewrite",
         contexts: ["editable"]
     });
     chrome.contextMenus.create({
