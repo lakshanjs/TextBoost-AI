@@ -170,30 +170,79 @@ async function resetToDefaults() {
     }
 }
 
-// ---------- Optional "Test" stubs ----------
-function testGemini() {
+// ---------- Connection tests ----------
+async function testGemini() {
     const key = (els.geminiApiKey && els.geminiApiKey.value || '').trim();
+    const model = (els.geminiModel && els.geminiModel.value) || DEFAULTS.geminiModel;
     if (!key) return showToast('Enter a Gemini API key first', 'err');
-    // Wire to your background script if you want an actual ping.
-    showToast('Gemini key looks set', 'ok');
+
+    try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}?key=${encodeURIComponent(key)}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        showToast('Gemini connection OK', 'ok');
+    } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+        showToast('Gemini test failed', 'err', 2600);
+    }
 }
 
-function testOpenRouter() {
+async function testOpenRouter() {
     const key = (els.openrouterApiKey && els.openrouterApiKey.value || '').trim();
     if (!key) return showToast('Enter an OpenRouter API key first', 'err');
-    showToast('OpenRouter key looks set', 'ok');
+
+    try {
+        const res = await fetch('https://openrouter.ai/api/v1/models', {
+            headers: {
+                Authorization: `Bearer ${key}`
+            }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        showToast('OpenRouter connection OK', 'ok');
+    } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+        showToast('OpenRouter test failed', 'err', 2600);
+    }
 }
 
-function testOpenAI() {
+async function testOpenAI() {
     const key = (els.openaiApiKey && els.openaiApiKey.value || '').trim();
     if (!key) return showToast('Enter an OpenAI API key first', 'err');
-    showToast('OpenAI key looks set', 'ok');
+
+    try {
+        const res = await fetch('https://api.openai.com/v1/models', {
+            headers: {
+                Authorization: `Bearer ${key}`
+            }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        showToast('OpenAI connection OK', 'ok');
+    } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+        showToast('OpenAI test failed', 'err', 2600);
+    }
 }
 
-function testDeepSeek() {
+async function testDeepSeek() {
     const key = (els.deepseekApiKey && els.deepseekApiKey.value || '').trim();
     if (!key) return showToast('Enter a DeepSeek API key first', 'err');
-    showToast('DeepSeek key looks set', 'ok');
+
+    try {
+        const res = await fetch('https://api.deepseek.com/v1/models', {
+            headers: {
+                Authorization: `Bearer ${key}`
+            }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        showToast('DeepSeek connection OK', 'ok');
+    } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+        showToast('DeepSeek test failed', 'err', 2600);
+    }
 }
 
 // ---------- Wire events ----------
