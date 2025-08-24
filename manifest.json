@@ -38,29 +38,29 @@
   "commands": {
     "ai-quick-rewrite": {
       "suggested_key": {
-        "default": "Ctrl+Alt+Q",
-        "mac": "Command+Option+Q"
+        "default": "Ctrl+Shift+Q",
+        "mac": "Command+Shift+Q"
       },
       "description": "Quick rewrite (clarify & fix grammar)"
     },
     "ai-quick-rewrite-alt": {
       "suggested_key": {
-        "default": "Alt+Q",
-        "mac": "Option+Q"
+        "default": "Alt+Shift+Q",
+        "mac": "Option+Shift+Q"
       },
-      "description": "Quick rewrite (Alt+Q)"
+      "description": "Quick rewrite (Alt+Shift+Q)"
     },
     "ai-summarize": {
       "suggested_key": {
-        "default": "Ctrl+Alt+S",
-        "mac": "Command+Option+S"
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
       },
       "description": "Summarize"
     },
     "ai-expand": {
       "suggested_key": {
-        "default": "Ctrl+Alt+E",
-        "mac": "Command+Option+E"
+        "default": "Ctrl+Shift+E",
+        "mac": "Command+Shift+E"
       },
       "description": "Write in detail"
     }
