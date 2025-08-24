@@ -5,7 +5,7 @@ Highlight text inside an input, textarea, or contenteditable element. Right-clic
 - **Summarize**
 - **Write in detail**
 
-The selection is replaced with AI output using Google's Generative Language API.
+The selection is replaced with AI output using either Google's Generative Language API or OpenRouter.
 
 ## Install (Developer Mode)
 
@@ -14,4 +14,8 @@ The selection is replaced with AI output using Google's Generative Language API.
 3. Click **Load unpacked** and select this folder.
 4. Focus any editable field, highlight text, and right-click to use **TextBoost AI**.
 
-> ⚠️ **Security note**: The API key is embedded in `background.js`. Anyone can extract it from an unpacked extension. For broader distribution, remove the hardcoded key and add an options page or proxy calls through your backend.
+## Configuration
+
+Open the extension's options page to choose between Gemini and OpenRouter, provide your API key, select a model, and adjust temperature.
+
+> ⚠️ **Security note**: API keys are stored in Chrome's extension storage; treat this extension as a personal tool.

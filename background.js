@@ -1,7 +1,20 @@
 // TextBoost AI - Background Service Worker (Manifest V3)
-// NOTE: Hardcoding API keys in extensions is not secure. Use for personal/dev only.
-const API_KEY = "AIzaSyC6L-p1G5Vf79Lbq9CrpkWcte6hzUWhyng"; // provided by you
-const MODEL = "gemini-2.5-flash-lite"; // adjust if you need higher quality
+// API keys and models are configured via the extension options page and stored in chrome.storage.
+
+const DEFAULT_SETTINGS = {
+    provider: 'gemini',
+    geminiApiKey: '',
+    geminiModel: 'gemini-2.5-flash-lite',
+    openrouterApiKey: '',
+    openrouterModel: 'openrouter/auto',
+    temperature: 0.7
+};
+
+function getSettings() {
+    return new Promise(resolve => {
+        chrome.storage.sync.get(DEFAULT_SETTINGS, resolve);
+    });
+}
 
 // Mirror logs to the page's DevTools console
 async function pageLog(tabId, ...args) {
@@ -69,7 +82,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     try {
         const prompt = buildPrompt(action, selected);
         pageLog(tab.id, prompt);
-        const rewritten = await callGemini(prompt);
+        const rewritten = await callModel(prompt);
         pageLog(tab.id, rewritten);
         if (!rewritten) {
             notify(tab.id, "TextBoost AI: AI returned no content.");
@@ -107,15 +120,16 @@ function buildPrompt(action, text) {
     return text;
 }
 
-async function callGemini(userText) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(API_KEY)}`;
+async function callGemini(userText, apiKey, model, temperature) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
     const body = {
         contents: [
             {
                 role: "user",
                 parts: [{ text: userText }]
             }
-        ]
+        ],
+        generationConfig: { temperature }
     };
     const res = await fetch(url, {
         method: "POST",
@@ -129,8 +143,42 @@ async function callGemini(userText) {
     const data = await res.json();
     const text =
         data?.candidates?.[0]?.content?.parts?.[0]?.text ??
-        (data?.candidates?.[0]?.content?.parts || []).map(p => p.text).filter(Boolean).join("\\n");
+        (data?.candidates?.[0]?.content?.parts || []).map(p => p.text).filter(Boolean).join("\n");
     return (text || "").trim();
+}
+
+async function callOpenRouter(userText, apiKey, model, temperature) {
+    const url = 'https://openrouter.ai/api/v1/chat/completions';
+    const body = {
+        model,
+        messages: [{ role: 'user', content: userText }],
+        temperature
+    };
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+        const t = await res.text().catch(() => "");
+        throw new Error(`HTTP ${res.status}: ${t}`);
+    }
+    const data = await res.json();
+    return (data?.choices?.[0]?.message?.content || '').trim();
+}
+
+async function callModel(userText) {
+    const settings = await getSettings();
+    const temperature = settings.temperature ?? 0.7;
+    if (settings.provider === 'openrouter') {
+        if (!settings.openrouterApiKey) throw new Error('OpenRouter API key is missing');
+        return callOpenRouter(userText, settings.openrouterApiKey, settings.openrouterModel, temperature);
+    }
+    if (!settings.geminiApiKey) throw new Error('Gemini API key is missing');
+    return callGemini(userText, settings.geminiApiKey, settings.geminiModel, temperature);
 }
 
 function notify(tabId, message) {
