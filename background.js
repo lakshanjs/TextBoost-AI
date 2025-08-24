@@ -58,25 +58,21 @@ chrome.runtime.onInstalled.addListener(() => {
         contexts: ["editable"]
     });
 });
+async function handleAction(action, tabId) {
+    if (!tabId || !["ai-better-write", "ai-summarize", "ai-expand"].includes(action)) return;
 
-chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-    if (!tab || !tab.id) return;
-    const action = info.menuItemId;
-    if (!["ai-better-write", "ai-summarize", "ai-expand"].includes(action)) return;
-
-    // UPDATED: Get both text and element info in one call
     const [{ result, error }] = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
+        target: { tabId },
         func: getSelectedEditableTextAndElement
     });
 
     if (error) {
-        notify(tab.id, "TextBoost AI: failed to read selection: " + error);
+        notify(tabId, "TextBoost AI: failed to read selection: " + error);
         return;
     }
-    
+
     if (!result || !result.text.trim()) {
-        notify(tab.id, "TextBoost AI: select some text inside an editable field first.");
+        notify(tabId, "TextBoost AI: select some text inside an editable field first.");
         return;
     }
 
@@ -85,25 +81,36 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
     try {
         const prompt = buildPrompt(action, selected);
-        pageLog(tab.id, prompt);
+        pageLog(tabId, prompt);
         const rewritten = await callModel(prompt);
-        pageLog(tab.id, rewritten);
+        pageLog(tabId, rewritten);
         if (!rewritten) {
-            notify(tab.id, "TextBoost AI: AI returned no content.");
+            notify(tabId, "TextBoost AI: AI returned no content.");
             return;
         }
 
-        // UPDATED: Pass both replacement text and element info
         await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
+            target: { tabId },
             func: replaceTextInElement,
             args: [rewritten, elementInfo]
         });
 
-        notify(tab.id, "TextBoost AI: replaced selection.");
+        notify(tabId, "TextBoost AI: replaced selection.");
     } catch (e) {
-        notify(tab.id, "TextBoost AI error: " + (e?.message || e));
+        notify(tabId, "TextBoost AI error: " + (e?.message || e));
     }
+}
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+    if (!tab || !tab.id) return;
+    handleAction(info.menuItemId, tab.id);
+});
+
+chrome.commands.onCommand.addListener(async (command) => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || !tab.id) return;
+    const action = command === "ai-better-write-alt" ? "ai-better-write" : command;
+    handleAction(action, tab.id);
 });
 
 function buildPrompt(action, text) {
